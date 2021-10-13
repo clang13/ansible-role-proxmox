@@ -1,22 +1,5 @@
 # This is an Ansible version of what "pveceph install" actually does
 ---
-- block:
-    - name: Install custom Ceph systemd service
-      copy:
-        src: /usr/share/doc/pve-manager/examples/ceph.service
-        dest: /etc/systemd/system/ceph.service
-        remote_src: true
-        owner: root
-        group: root
-        mode: preserve
-      notify: 'restart ceph'
-
-    - name: Enable Ceph
-      systemd:
-        name: ceph.service
-        enabled: true
-  when:
-    - "ansible_distribution_release == 'stretch'"
 
 - block:
     - name: Create initial Ceph config
