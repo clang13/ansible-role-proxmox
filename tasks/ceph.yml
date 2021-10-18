@@ -70,12 +70,13 @@
       tags: ceph_volume
 
     - name: Create Ceph OSDs
-      ceph_volume:
-        action: create
-        data: "{{ item.device }}"
-        db: "{{ item['block.db'] | default(omit) }}"
-        wal: "{{ item['block.wal'] | default(omit) }}"
-        dmcrypt: "{{ item.encrypted | default(omit) | bool }}"
+      command: >-
+        pveceph osd create {{ item.device }}
+        {% if "encrypted" in item and item["encrypted"] | bool %}--encrypted 1{% endif %}
+        {% if "block.db" in item %}--db_dev {{ item["block.db"] }}{% endif %}
+        {% if "block.wal" in item %}--wal_dev {{ item["block.wal"] }}{% endif %}
+      args:
+        creates: '{{ item.device }}1'
       with_items: '{{ _ceph_osds_diff }}'
 
   tags: create_osd
