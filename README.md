@@ -195,9 +195,9 @@ pvecluster. Here, a file lookup is used to read the contents of a file in the
 playbook, e.g. `files/pve01/lab-node01.key`. You could possibly just use host
 variables instead of files, if you prefer.
 
-`pve_ssl_letsencrypt` allows to obtain a Let's Encrypt SSL certificate for
-pvecluster. The Ansible role [systemli.letsencrypt](https://galaxy.ansible.com/systemli/letsencrypt/)
-needs to be installed first in order to use this function.
+`pve_acme_enabled` allows to obtain an acmle SSL certificate for pve nodes. If
+enabled, you also need to configure `pve_acme_contact` (your mail address) and
+`pve_acme_directory` (url to acme service).
 
 `pve_cluster_enabled` enables the role to perform all cluster management tasks.
 This includes creating a cluster if it doesn't exist, or adding nodes to the
@@ -394,6 +394,7 @@ pve_ceph_enabled: false # Specifies wheter or not to install and configure Ceph 
 pve_ceph_repository_line: "deb http://download.proxmox.com/debian/ceph-pacific bullseye main" # apt-repository configuration. Will be automatically set for 6.x and 7.x (Further information: https://pve.proxmox.com/wiki/Package_Repositories)
 pve_ceph_network: "{{ (ansible_default_ipv4.network +'/'+ ansible_default_ipv4.netmask) | ipaddr('net') }}" # Ceph public network
 # pve_ceph_cluster_network: "" # Optional, if the ceph cluster network is different from the public network (see https://pve.proxmox.com/pve-docs/chapter-pveceph.html#pve_ceph_install_wizard)
+pve_ceph_nodes: "{{ pve_group }}" # Host group containing all Ceph nodes
 pve_ceph_mon_group: "{{ pve_group }}" # Host group containing all Ceph monitor hosts
 pve_ceph_mgr_group: "{{ pve_ceph_mon_group }}" # Host group containing all Ceph manager hosts
 pve_ceph_mds_group: "{{ pve_group }}" # Host group containing all Ceph metadata server hosts
@@ -403,7 +404,9 @@ pve_ceph_fs: [] # List of CephFS filesystems to create
 pve_ceph_crush_rules: [] # List of CRUSH rules to create
 # pve_ssl_private_key: "" # Should be set to the contents of the private key to use for HTTPS
 # pve_ssl_certificate: "" # Should be set to the contents of the certificate to use for HTTPS
-pve_ssl_letsencrypt: false # Specifies whether or not to obtain a SSL certificate using Let's Encrypt
+pve_acme_enabled: no # If enabled, role tries to add a SSL certificate for webui via ACME provider
+# pve_acme_directory: # ACME directory to register on/get certificates from
+# pve_acme_contact: # email address for ACME provider
 pve_roles: [] # Added more roles with specific privileges. See section on User Management.
 pve_groups: [] # List of group definitions to manage in PVE. See section on User Management.
 pve_users: [] # List of user definitions to manage in PVE. See section on User Management.
@@ -610,6 +613,7 @@ following definitions show some of the configurations that are possible.
 pve_ceph_enabled: true
 pve_ceph_network: '172.10.0.0/24'
 pve_ceph_cluster_network: '172.10.1.0/24'
+pve_ceph_nodes: "ceph_nodes"
 pve_ceph_osds:
   # OSD with everything on the same device
   - device: /dev/sdc
@@ -671,6 +675,8 @@ pve_ceph_fs:
 
 `pve_ceph_network` by default uses the `ipaddr` filter, which requires the
 `netaddr` library to be installed and usable by your Ansible controller.
+
+`pve_ceph_nodes` by default uses `pve_group`, this parameter allows to specify on which nodes install Ceph (e.g. if you don't want to install Ceph on all your nodes).
 
 `pve_ceph_osds` by default creates unencrypted ceph volumes. To use encrypted volumes the parameter `encrypted` has to be set per drive to `true`.
 

@@ -204,7 +204,9 @@
   when: "pve_cluster_enabled | bool"
 
 - import_tasks: ceph.yml
-  when: "pve_ceph_enabled | bool"
+  when:
+    - "pve_ceph_enabled | bool"
+    - "inventory_hostname in groups[pve_ceph_nodes]"
 
 - name: Configure Proxmox roles
   proxmox_role:
@@ -305,5 +307,5 @@
     - "pve_ssl_private_key is defined"
     - "pve_ssl_certificate is defined"
 
-- import_tasks: ssl_letsencrypt.yml
-  when: "pve_ssl_letsencrypt | bool"
+- import_tasks: acme_config.yml
+  when: pve_acme_enabled
